@@ -1,0 +1,483 @@
+Microsoft (R) Macro Assembler Version 14.10.25017.0	    03/10/17 22:27:12
+example.asm						     Page 1 - 1
+
+
+				; assembly language program -- Contains 4 different procedures that utilize the stack for passing parameters
+				; Author:  Ali Mazeh
+				; Date:    12/11/2016
+
+				.586
+				.MODEL FLAT
+
+				INCLUDE io-asm.h            ; header file for input/output
+			      C ; IO.H -- header file for I/O macros (listing suppressed)
+			      C .NOLIST      ; turn off listing
+			      C .LIST        ; begin listing
+			      C 
+
+				.STACK 4096
+
+ 00000000			.DATA
+ 00000000  0000000A [		array		DWORD 10 DUP (?)
+	    00000000
+	   ]
+ 00000028 00000000		number_1	DWORD ?
+ 0000002C 00000000		number_2	DWORD ?
+ 00000030 00000000		number_3	DWORD ?
+ 00000034 00000000		nbrInts		DWORD ?
+ 00000038 00000000		count		DWORD ?
+ 0000003C 00000000		average		DWORD ?
+ 00000040 00000000		nbrElements DWORD 0
+ 00000044 0000000A		arraySize	DWORD 10
+
+ 00000048 45 6E 74 65 72	direction1	BYTE "Enter two numbers. Function will find the minimum number.",0
+	   20 74 77 6F 20
+	   6E 75 6D 62 65
+	   72 73 2E 20 46
+	   75 6E 63 74 69
+	   6F 6E 20 77 69
+	   6C 6C 20 66 69
+	   6E 64 20 74 68
+	   65 20 6D 69 6E
+	   69 6D 75 6D 20
+	   6E 75 6D 62 65
+	   72 2E 00
+ 00000082 45 6E 74 65 72	direction2	BYTE "Enter three numbers. Function will find the maximum number.",0
+	   20 74 68 72 65
+	   65 20 6E 75 6D
+	   62 65 72 73 2E
+	   20 46 75 6E 63
+	   74 69 6F 6E 20
+	   77 69 6C 6C 20
+	   66 69 6E 64 20
+	   74 68 65 20 6D
+	   61 78 69 6D 75
+	   6D 20 6E 75 6D
+	   62 65 72 2E 00
+ 000000BE 45 6E 74 65 72	direction3	BYTE "Enter 10 numbers into an array. Function will find the average.",0
+	   20 31 30 20 6E
+	   75 6D 62 65 72
+	   73 20 69 6E 74
+	   6F 20 61 6E 20
+	   61 72 72 61 79
+	   2E 20 46 75 6E
+	   63 74 69 6F 6E
+	   20 77 69 6C 6C
+	   20 66 69 6E 64
+	   20 74 68 65 20
+	   61 76 65 72 61
+	   67 65 2E 00
+ 000000FE 45 6E 74 65 72	direction4	BYTE "Enter a number. Function will search through previous array and return index.",0
+	   20 61 20 6E 75
+	   6D 62 65 72 2E
+	   20 46 75 6E 63
+	   74 69 6F 6E 20
+	   77 69 6C 6C 20
+	   73 65 61 72 63
+	   68 20 74 68 72
+	   6F 75 67 68 20
+	   70 72 65 76 69
+	   6F 75 73 20 61
+	   72 72 61 79 20
+	   61 6E 64 20 72
+	   65 74 75 72 6E
+	   20 69 6E 64 65
+	   78 2E 00
+
+ 0000014C 54 68 65 20 73	resultLbl1	BYTE "The smaller number is: ",0
+	   6D 61 6C 6C 65
+	   72 20 6E 75 6D
+	   62 65 72 20 69
+	   73 3A 20 00
+ 00000164 54 68 65 20 6C	resultLbl2	BYTE "The larger number is: ",0
+	   61 72 67 65 72
+	   20 6E 75 6D 62
+	   65 72 20 69 73
+	   3A 20 00
+ 0000017B 54 68 65 20 61	resultLbl3	BYTE "The average of all the elements in the array is: ",0
+	   76 65 72 61 67
+	   65 20 6F 66 20
+	   61 6C 6C 20 74
+	   68 65 20 65 6C
+	   65 6D 65 6E 74
+	   73 20 69 6E 20
+	   74 68 65 20 61
+	   72 72 61 79 20
+	   69 73 3A 20 00
+ 000001AD 54 68 65 20 69	resultLbl4	BYTE "The index of the value is:  ",0
+	   6E 64 65 78 20
+	   6F 66 20 74 68
+	   65 20 76 61 6C
+	   75 65 20 69 73
+	   3A 20 20 00
+
+ 000001CA  0000000B [		result      BYTE 11 DUP(?),0
+	    00
+	   ] 00
+ 000001D6 56 61 6C 75 65	mess		BYTE "Value not in array", 0
+	   20 6E 6F 74 20
+	   69 6E 20 61 72
+	   72 61 79 00
+ 000001E9 41 72 72 61 79	mess2		BYTE "Array is empty. Ending program", 0
+	   20 69 73 20 65
+	   6D 70 74 79 2E
+	   20 45 6E 64 69
+	   6E 67 20 70 72
+	   6F 67 72 61 6D
+	   00
+ 00000208 45 6E 74 65 72	prompt		BYTE "Enter a number.", 0
+	   20 61 20 6E 75
+	   6D 62 65 72 2E
+	   00
+ 00000218 49 6E 76 61 6C	invalid		BYTE "Invalid number. Try again", 0
+	   69 64 20 6E 75
+	   6D 62 65 72 2E
+	   20 54 72 79 20
+	   61 67 61 69 6E
+	   00
+ 00000232 41 72 72 61 79	full		BYTE "Array is now full.", 0
+	   20 69 73 20 6E
+	   6F 77 20 66 75
+	   6C 6C 2E 00
+ 00000245 00			blank		BYTE ?
+ 00000246  00000014 [		number		BYTE 20 DUP (?)
+	    00
+	   ]
+
+ 00000000			.CODE
+ 00000000			_MainProc PROC				
+								output	direction1, blank
+								input	prompt, number,20 		; get number
+								atod	number	
+ 00000046  50							push	eax						;push 2nd parameter
+
+								input	prompt, number,20 		; get number
+								atod	number	
+ 00000074  50							push	eax						;push the first parameter
+									
+ 00000075  E8 00000278						call	Min2					;call Proc1				
+ 0000007A  83 C4 08						add		esp,8					;remove parameters from stack
+
+								dtoa	result, eax				;convert to ASCII character
+								output	resultLbl1,result		;output label and result
+
+								output	direction2, blank
+
+								input	prompt, number,20 		; get number
+								atod	number	
+ 000000F4  50							push	eax
+
+								input	prompt, number,20 		; get number
+								atod	number	
+ 00000122  50							push	eax
+
+								input	prompt, number,20 		; get number
+								atod	number	
+ 00000150  50							push	eax
+
+ 00000151  E8 000001BB						call	Max3				;call Proc2			
+ 00000156  83 C4 0C						add		esp,12				;remove parameters from stack
+
+								dtoa	result, eax			;convert to ASCII character
+								output	resultLbl2,result	;output label and result
+								output	direction3, blank
+
+ 000001A3  8D 1D 00000000 R					lea		ebx, array		; load address of array
+
+ 000001A9							whilePos:	input	prompt, number, 20		; get number
+											atod	number			; convert to integer
+ 000001D6  89 03									mov		[ebx], eax		; store num in array
+ 000001D8  FF 05 00000040 R								inc		nbrElements		; increment number of elements
+ 000001DE  83 3D 00000040 R								cmp		nbrElements, 10	; check if array is full
+	   0A
+ 000001E5  74 05									jz		arrayFull		; jump if array is full
+ 000001E7  83 C3 04									add		ebx,4			; get next address of array
+ 000001EA  EB BD									jmp		whilePos		; loop
+
+ 000001EC							arrayFull:	output	full, blank		; output message that array is full
+ 00000205  EB 00									jmp		endWhile		; jump out of loop
+ 00000207							endwhile:
+ 00000207  8D 1D 00000000 R					lea		ebx, array
+
+ 0000020D  8D 05 0000003C R					lea		eax, average
+ 00000213  50							push	eax
+ 00000214  FF 35 00000040 R					push	nbrElements
+ 0000021A  8D 05 00000000 R					lea		eax,array
+ 00000220  50							push	eax
+
+ 00000221  E8 0000013C						call	Avg			; call Proc3
+ 00000226  83 C4 0C						add		esp,12
+
+ 00000229  A1 0000003C R					mov		eax, average
+								dtoa	result, eax		;convert to ASCII character
+								output	resultLbl3,result ;output label and result
+
+								output	direction4, blank
+
+								input	prompt, number,20 		; get number
+								atod	number	
+								
+ 000002A5  50							push	eax
+ 000002A6  FF 35 00000044 R					push	arraySize
+ 000002AC  8D 05 00000000 R					lea		eax,array
+ 000002B2  50							push	eax
+
+ 000002B3  E8 000000E9						call	Search		; call Proc4
+ 000002B8  83 C4 0C						add		esp,12
+
+								dtoa	result, eax			;convert to ASCII character
+								output	resultLbl4,result	;output label and result
+
+ 000002EC  B8 00000000						mov		eax, 0				;exit with return code 0
+ 000002F1  C3							ret						;return 					
+ 000002F2			_MainProc ENDP
+																
+ 000002F2			Min2 PROC	
+ 000002F2  55							push	ebp				; save the base pointer
+ 000002F3  8B EC						mov		ebp,esp			; establish stack frame
+ 000002F5  53							push	ebx				; save ebx
+ 000002F6  51							push	ecx
+ 000002F7  52							push	edx
+ 000002F8  66| 9C						pushf
+
+ 000002FA  8B 45 08						mov		eax,[ebp+8]		;copy the first parameter to bx
+ 000002FD  8B 5D 0C						mov		ebx,[ebp+12]	;copy the second parameter to bx
+
+ 00000300  3B C3						cmp		eax, ebx		;compare eax and ebx
+ 00000302  7F 02						jg		Larger			;jump if eax is greater than ebx
+ 00000304  7C 04						jl		finish			;jump if eax is smaller than ebx
+
+ 00000306  8B C3		Larger:			mov		eax, ebx		;copy ebx to eax
+ 00000308  EB 00						jmp		finish			;unconditionally jump
+
+ 0000030A  66| 9D		finish:			popf
+ 0000030C  5A							pop		edx
+ 0000030D  59							pop		ecx
+ 0000030E  5B							pop     ebx				;restore ebx
+ 0000030F  5D							pop		ebp				;restore ebp
+ 00000310  C3							ret			
+ 00000311			Min2 ENDP
+
+ 00000311			Max3 PROC	
+ 00000311  55							push	ebp				; save the base pointer
+ 00000312  8B EC						mov		ebp,esp			; establish stack frame
+ 00000314  53							push	ebx				; save registers
+ 00000315  51							push	ecx
+ 00000316  52							push	edx
+ 00000317  66| 9C						pushf
+
+ 00000319  8B 45 08						mov		eax,[ebp+8]		;copy the first parameter to eax
+ 0000031C  A3 00000028 R					mov		number_1, eax
+ 00000321  8B 45 0C						mov		eax,[ebp+12]	;copy the second parameter to eax
+ 00000324  A3 0000002C R					mov		number_2, eax
+ 00000329  8B 45 10						mov		eax,[ebp+16]
+ 0000032C  A3 00000030 R					mov		number_3, eax
+
+ 00000331  3B 05 0000002C R					cmp		eax, number_2		;compare num3 and num2
+ 00000337  7F 02						jg		Larger			;jump if num3 is greater than num2
+ 00000339  7C 11						jl		Smaller			;jump if num3 is smaller than num2
+
+ 0000033B  3B 05 00000028 R	Larger:			cmp		eax, number_1	;copy num1 to eax
+ 00000341  7F 18						jg		finish
+ 00000343  7C 00						jl		Smaller1				
+
+ 00000345  A1 00000028 R	Smaller1:		mov		eax, number_1
+ 0000034A  EB 0F						jmp		finish
+
+ 0000034C  A1 0000002C R	Smaller:		mov		eax, number_2
+ 00000351  3B 05 00000028 R					cmp		eax, number_1
+ 00000357  7F 02						jg		finish
+ 00000359  7C EA						jl		Smaller1
+ 0000035B			finalLarge:		
+ 0000035B  66| 9D		finish:			popf
+ 0000035D  5A							pop		edx
+ 0000035E  59							pop		ecx
+ 0000035F  5B							pop		ebx
+ 00000360  5D							pop		ebp
+ 00000361  C3							ret		
+ 00000362			Max3 ENDP
+
+ 00000362			Avg PROC
+ 00000362  55						push	ebp
+ 00000363  8B EC					mov		ebp, esp
+ 00000365  60						pushad
+ 00000366  66| 9C					pushf
+
+ 00000368  8B 5D 08					mov		ebx, [ebp+8]
+ 0000036B  8B 45 0C					mov		eax, [ebp+12]
+ 0000036E  A3 00000034 R				mov		nbrInts, eax
+ 00000373  B9 00000000					mov		ecx, 0
+ 00000378  B8 00000000					mov		eax, 0
+							
+ 0000037D  03 03					moreEle:	add eax, [ebx]	
+ 0000037F  83 C3 04							add ebx, 4
+ 00000382  41								inc ecx
+ 00000383  3B 0D 00000034 R						cmp	ecx, nbrInts
+ 00000389  7E F2							jle moreEle
+ 0000038B  83 C0 05					add		eax, 5
+ 0000038E  99						cdq
+ 0000038F  8B 1D 00000034 R				mov		ebx, nbrInts
+ 00000395  F7 FB					idiv	ebx
+ 00000397  8B 5D 10					mov		ebx, [ebp+16]
+ 0000039A  89 03					mov		[ebx], eax
+
+ 0000039C  66| 9D					popf
+ 0000039E  61						popad
+ 0000039F  5D						pop	ebp
+ 000003A0  C3						ret
+ 000003A1			Avg ENDP
+
+ 000003A1			Search PROC
+ 000003A1  55						push	ebp
+ 000003A2  8B EC					mov		ebp, esp
+ 000003A4  53						push ebx
+ 000003A5  51						push ecx
+ 000003A6  52						push edx
+ 000003A7  66| 9C					pushf
+
+ 000003A9  8B 5D 08					mov		ebx, [ebp+8]	; load address of array
+ 000003AC  8B 45 0C					mov		eax, [ebp+12]
+ 000003AF  A3 00000034 R				mov		nbrInts, eax
+ 000003B4  8B 45 10					mov		eax, [ebp+16]
+ 000003B7  C7 05 00000038 R				mov		count, 1
+	   00000001
+
+ 000003C1						searchProc:	
+ 000003C1  8B 0D 00000038 R				mov		ecx, count		; 
+ 000003C7  3B 0D 00000034 R				cmp		ecx, nbrInts	; compare count to number of elements
+ 000003CD  7F 38					jg		emptyArr		; jump if count > numElements
+					
+ 000003CF				loopForever:	
+ 000003CF  3B 0D 00000034 R				cmp		ecx, nbrInts	; compare count and numElements
+ 000003D5  7E 20					jng		notIn			; jump if count < nbrElements
+							output	mess, blank		; else display value not in array
+ 000003F0  B8 00000000					mov		eax, 0			; set index as 0
+ 000003F5  EB 29					jmp		endSearch		; then jump to ask user if they want to run again
+ 000003F7				notIn:
+ 000003F7  39 03					cmp		[ebx], eax		; compare current array element to search value
+ 000003F9  75 02					jnz		noMatch			; jump if currElement != searchValue
+ 000003FB  EB 06					jmp		matched			; jump to prompt user
+ 000003FD				noMatch:
+ 000003FD  41						inc	ecx			; increment count
+ 000003FE  83 C3 04					add	ebx, 4		; increment to next array location
+ 00000401  EB CC					jmp loopForever	; jump back to loop
+
+
+ 00000403  8B C1		matched:	mov eax, ecx
+ 00000405  EB 19					jmp	endSearch
+
+ 00000407			emptyArr:	output	mess2, blank		; notify user array is empty
+ 00000420			endSearch:									
+ 00000420  66| 9D					popf
+ 00000422  5A						pop edx
+ 00000423  59						pop ecx
+ 00000424  5B						pop ebx
+ 00000425  5D						pop	ebp
+ 00000426  C3						ret
+ 00000427			Search ENDP
+				END
+
+Microsoft (R) Macro Assembler Version 14.10.25017.0	    03/10/17 22:27:12
+example.asm						     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+atod . . . . . . . . . . . . . .	Proc
+atow . . . . . . . . . . . . . .	Proc
+dtoa . . . . . . . . . . . . . .	Proc
+input  . . . . . . . . . . . . .	Proc
+output . . . . . . . . . . . . .	Proc
+wtoa . . . . . . . . . . . . . .	Proc
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000025A Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000427 Para	  Public  'CODE'	
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+Avg  . . . . . . . . . . . . . .	P Near	 00000362 _TEXT	Length= 0000003F Public
+  moreEle  . . . . . . . . . . .	L Near	 0000037D _TEXT	
+Max3 . . . . . . . . . . . . . .	P Near	 00000311 _TEXT	Length= 00000051 Public
+  Larger . . . . . . . . . . . .	L Near	 0000033B _TEXT	
+  Smaller1 . . . . . . . . . . .	L Near	 00000345 _TEXT	
+  Smaller  . . . . . . . . . . .	L Near	 0000034C _TEXT	
+  finalLarge . . . . . . . . . .	L Near	 0000035B _TEXT	
+  finish . . . . . . . . . . . .	L Near	 0000035B _TEXT	
+Min2 . . . . . . . . . . . . . .	P Near	 000002F2 _TEXT	Length= 0000001F Public
+  Larger . . . . . . . . . . . .	L Near	 00000306 _TEXT	
+  finish . . . . . . . . . . . .	L Near	 0000030A _TEXT	
+Search . . . . . . . . . . . . .	P Near	 000003A1 _TEXT	Length= 00000086 Public
+  searchProc . . . . . . . . . .	L Near	 000003C1 _TEXT	
+  loopForever  . . . . . . . . .	L Near	 000003CF _TEXT	
+  notIn  . . . . . . . . . . . .	L Near	 000003F7 _TEXT	
+  noMatch  . . . . . . . . . . .	L Near	 000003FD _TEXT	
+  matched  . . . . . . . . . . .	L Near	 00000403 _TEXT	
+  emptyArr . . . . . . . . . . .	L Near	 00000407 _TEXT	
+  endSearch  . . . . . . . . . .	L Near	 00000420 _TEXT	
+_MainProc  . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000002F2 Public
+  whilePos . . . . . . . . . . .	L Near	 000001A9 _TEXT	
+  arrayFull  . . . . . . . . . .	L Near	 000001EC _TEXT	
+  endwhile . . . . . . . . . . .	L Near	 00000207 _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000000h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+_getInput  . . . . . . . . . . .	L Near	 00000000 FLAT	External
+_showOutput  . . . . . . . . . .	L Near	 00000000 FLAT	External
+arraySize  . . . . . . . . . . .	DWord	 00000044 _DATA	
+array  . . . . . . . . . . . . .	DWord	 00000000 _DATA	
+atodproc . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+atowproc . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+average  . . . . . . . . . . . .	DWord	 0000003C _DATA	
+blank  . . . . . . . . . . . . .	Byte	 00000245 _DATA	
+count  . . . . . . . . . . . . .	DWord	 00000038 _DATA	
+direction1 . . . . . . . . . . .	Byte	 00000048 _DATA	
+direction2 . . . . . . . . . . .	Byte	 00000082 _DATA	
+direction3 . . . . . . . . . . .	Byte	 000000BE _DATA	
+direction4 . . . . . . . . . . .	Byte	 000000FE _DATA	
+dtoaproc . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+full . . . . . . . . . . . . . .	Byte	 00000232 _DATA	
+invalid  . . . . . . . . . . . .	Byte	 00000218 _DATA	
+mess2  . . . . . . . . . . . . .	Byte	 000001E9 _DATA	
+mess . . . . . . . . . . . . . .	Byte	 000001D6 _DATA	
+nbrElements  . . . . . . . . . .	DWord	 00000040 _DATA	
+nbrInts  . . . . . . . . . . . .	DWord	 00000034 _DATA	
+number_1 . . . . . . . . . . . .	DWord	 00000028 _DATA	
+number_2 . . . . . . . . . . . .	DWord	 0000002C _DATA	
+number_3 . . . . . . . . . . . .	DWord	 00000030 _DATA	
+number . . . . . . . . . . . . .	Byte	 00000246 _DATA	
+prompt . . . . . . . . . . . . .	Byte	 00000208 _DATA	
+resultLbl1 . . . . . . . . . . .	Byte	 0000014C _DATA	
+resultLbl2 . . . . . . . . . . .	Byte	 00000164 _DATA	
+resultLbl3 . . . . . . . . . . .	Byte	 0000017B _DATA	
+resultLbl4 . . . . . . . . . . .	Byte	 000001AD _DATA	
+result . . . . . . . . . . . . .	Byte	 000001CA _DATA	
+wtoaproc . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+
+	   0 Warnings
+	   0 Errors
