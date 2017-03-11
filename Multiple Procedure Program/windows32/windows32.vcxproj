@@ -184,7 +184,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <MASM Include="example.asm" />
+    <MASM Include="ProcedureProgram.asm" />
     <MASM Include="io.asm" />
   </ItemGroup>
   <ItemGroup>
